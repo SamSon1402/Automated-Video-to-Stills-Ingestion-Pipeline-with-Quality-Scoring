@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flim.ai - Automated Video Ingestion Pipeline</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --secondary: #8b5cf6;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-dark: #0a0f0d;
+            --bg-card: #111916;
+            --bg-elevated: #1a2420;
+            --text-primary: #f0fdf4;
+            --text-secondary: #86efac;
+            --text-muted: #4ade80;
+            --border: #22543d;
+            --gradient-main: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, transparent 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            max-width: 1800px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--gradient-main);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .logo-text {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-subtitle {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header-badges {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 0.4rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        .badge.processing {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--success);
+            color: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .main {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 1.5rem 0 2rem;
+        }
+
+        .hero h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        /* Upload Zone */
+        .upload-section {
+            margin-bottom: 2rem;
+        }
+
+        .upload-zone {
+            background: var(--bg-card);
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .upload-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .upload-formats {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .format-badge {
+            background: var(--bg-elevated);
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        /* Demo Videos */
+        .demo-videos {
+            margin-top: 1.5rem;
+        }
+
+        .demo-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            text-align: center;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        @media (max-width: 900px) {
+            .demo-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .demo-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .demo-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .demo-card.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .demo-thumb {
+            aspect-ratio: 16/9;
+            background: var(--bg-elevated);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .demo-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .demo-duration {
+            position: absolute;
+            bottom: 6px;
+            right: 6px;
+            background: rgba(0,0,0,0.8);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .demo-info {
+            padding: 0.75rem;
+        }
+
+        .demo-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .demo-meta {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        /* Processing Dashboard */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-body { padding: 1.25rem; }
+
+        /* Processing Pipeline */
+        .pipeline-visual {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .pipeline-visual::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 60px;
+            right: 60px;
+            height: 3px;
+            background: var(--bg-elevated);
+            z-index: 0;
+        }
+
+        .pipeline-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--bg-elevated);
+            border: 3px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            transition: all 0.3s;
+        }
+
+        .step-circle.active {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--primary);
+            animation: stepPulse 1s infinite;
+        }
+
+        .step-circle.complete {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        @keyframes stepPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .step-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* Progress Stats */
+        .progress-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-box {
+            background: var(--bg-elevated);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Frame Extraction Preview */
+        .extraction-preview {
+            margin-bottom: 1.5rem;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .preview-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .preview-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .frame-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+        }
+
+        .frame-item {
+            aspect-ratio: 16/9;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .frame-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .frame-item.approved {
+            border-color: var(--success);
+        }
+
+        .frame-item.rejected {
+            border-color: var(--danger);
+            opacity: 0.5;
+        }
+
+        .frame-item.pending {
+            border-color: var(--warning);
+        }
+
+        .frame-score {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            background: rgba(0,0,0,0.8);
+            padding: 0.15rem 0.3rem;
+            border-radius: 3px;
+            font-size: 0.6rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .frame-score.high { color: var(--success); }
+        .frame-score.medium { color: var(--warning); }
+        .frame-score.low { color: var(--danger); }
+
+        .frame-badge {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            font-size: 0.7rem;
+        }
+
+        /* Quality Distribution */
+        .quality-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .quality-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .quality-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .quality-bar {
+            height: 24px;
+            background: var(--bg-elevated);
+            border-radius: 6px;
+            display: flex;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .quality-segment {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 600;
+            transition: width 0.5s;
+        }
+
+        .quality-segment.excellent { background: #10b981; }
+        .quality-segment.good { background: #22c55e; }
+        .quality-segment.acceptable { background: #f59e0b; }
+        .quality-segment.rejected { background: #ef4444; }
+
+        .quality-legend {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+        }
+
+        /* Tagging Preview */
+        .tagging-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .tag-item {
+            background: var(--bg-elevated);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .tag-thumb {
+            width: 80px;
+            height: 50px;
+            border-radius: 4px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .tag-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .tag-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .tag-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.4rem;
+        }
+
+        .tag-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .tag-score {
+            font-size: 0.7rem;
+            color: var(--success);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .tag-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+
+        .tag-pill {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--primary);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.6rem;
+        }
+
+        /* Sidebar Panels */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Live Log */
+        .log-panel {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 0.75rem;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+        }
+
+        .log-entry {
+            padding: 0.3rem 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .log-time {
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .log-message {
+            color: var(--text-secondary);
+        }
+
+        .log-message.success { color: var(--success); }
+        .log-message.warning { color: var(--warning); }
+        .log-message.error { color: var(--danger); }
+
+        /* Metrics Summary */
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .metric-value {
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient-main);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-elevated);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-dark);
+            border-color: var(--primary);
+        }
+
+        .btn-full {
+            grid-column: 1 / -1;
+        }
+
+        /* Cost Savings */
+        .savings-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .savings-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .savings-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .savings-detail {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        /* Processing Status */
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .status-dot.active {
+            background: var(--success);
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .status-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">⚙️</div>
+                <div>
+                    <div class="logo-text">Flim.ai</div>
+                    <div class="logo-subtitle">Auto Ingestion Pipeline</div>
+                </div>
+            </div>
+            <div class="header-badges">
+                <span class="badge processing">Processing Active</span>
+                <span class="badge">TransNetV2</span>
+                <span class="badge">Quality Scoring</span>
+                <span class="badge">Auto-Tagging</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="hero">
+            <h1>🎞️ Automated Video-to-Stills Ingestion</h1>
+            <p>AI-powered extraction, quality scoring, and auto-tagging for rapid database expansion</p>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                <input type="file" id="fileInput" accept="video/*" style="display: none;" onchange="handleFileUpload(event)">
+                <div class="upload-icon">📤</div>
+                <div class="upload-title">Drop Video File or Click to Upload</div>
+                <div class="upload-desc">Full movie files, trailers, music videos, or commercial footage</div>
+                <div class="upload-formats">
+                    <span class="format-badge">MP4</span>
+                    <span class="format-badge">MOV</span>
+                    <span class="format-badge">MKV</span>
+                    <span class="format-badge">AVI</span>
+                    <span class="format-badge">Up to 4K</span>
+                </div>
+            </div>
+
+            <div class="demo-videos">
+                <div class="demo-label">Or select a demo video to process:</div>
+                <div class="demo-grid">
+                    <div class="demo-card" onclick="selectDemo('bladerunner')">
+                        <div class="demo-thumb">
+                            <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400" alt="">
+                            <span class="demo-duration">2:34:52</span>
+                        </div>
+                        <div class="demo-info">
+                            <div class="demo-title">Blade Runner 2049</div>
+                            <div class="demo-meta">Sci-Fi • 2017 • Denis Villeneuve</div>
+                        </div>
+                    </div>
+                    <div class="demo-card" onclick="selectDemo('moonlight')">
+                        <div class="demo-thumb">
+                            <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400" alt="">
+                            <span class="demo-duration">1:51:23</span>
+                        </div>
+                        <div class="demo-info">
+                            <div class="demo-title">Moonlight</div>
+                            <div class="demo-meta">Drama • 2016 • Barry Jenkins</div>
+                        </div>
+                    </div>
+                    <div class="demo-card" onclick="selectDemo('musicvideo')">
+                        <div class="demo-thumb">
+                            <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400" alt="">
+                            <span class="demo-duration">4:12</span>
+                        </div>
+                        <div class="demo-info">
+                            <div class="demo-title">Music Video Sample</div>
+                            <div class="demo-meta">Music Video • 2024 • Creative</div>
+                        </div>
+                    </div>
+                    <div class="demo-card selected" onclick="selectDemo('commercial')">
+                        <div class="demo-thumb">
+                            <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=400" alt="">
+                            <span class="demo-duration">0:45</span>
+                        </div>
+                        <div class="demo-info">
+                            <div class="demo-title">Luxury Brand Ad</div>
+                            <div class="demo-meta">Commercial • 2024 • Premium</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing Dashboard -->
+        <div class="dashboard" id="processingDashboard">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">⚡ Processing Pipeline</h3>
+                    <div class="status-indicator">
+                        <div class="status-dot active" id="statusDot"></div>
+                        <span class="status-text" id="statusText">Processing...</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Pipeline Visualization -->
+                    <div class="pipeline-visual">
+                        <div class="pipeline-step">
+                            <div class="step-circle complete" id="step1">📥</div>
+                            <div class="step-label">Ingest</div>
+                        </div>
+                        <div class="pipeline-step">
+                            <div class="step-circle complete" id="step2">✂️</div>
+                            <div class="step-label">Shot Detection</div>
+                        </div>
+                        <div class="pipeline-step">
+                            <div class="step-circle active" id="step3">🖼️</div>
+                            <div class="step-label">Keyframes</div>
+                        </div>
+                        <div class="pipeline-step">
+                            <div class="step-circle" id="step4">⭐</div>
+                            <div class="step-label">Quality Score</div>
+                        </div>
+                        <div class="pipeline-step">
+                            <div class="step-circle" id="step5">🏷️</div>
+                            <div class="step-label">Auto-Tag</div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Stats -->
+                    <div class="progress-stats">
+                        <div class="stat-box">
+                            <div class="stat-value" id="shotsDetected">47</div>
+                            <div class="stat-label">Shots Detected</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="framesExtracted">142</div>
+                            <div class="stat-label">Frames Extracted</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="framesApproved">98</div>
+                            <div class="stat-label">Frames Approved</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="processTime">12.4s</div>
+                            <div class="stat-label">Process Time</div>
+                        </div>
+                    </div>
+
+                    <!-- Frame Extraction Preview -->
+                    <div class="extraction-preview">
+                        <div class="preview-header">
+                            <span class="preview-title">🖼️ Extracted Keyframes</span>
+                            <span class="preview-count" id="framePreviewCount">Showing 10 of 142</span>
+                        </div>
+                        <div class="frame-grid" id="frameGrid">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Quality Distribution -->
+                    <div class="quality-section">
+                        <div class="quality-header">
+                            <span class="quality-title">📊 Quality Distribution</span>
+                        </div>
+                        <div class="quality-bar">
+                            <div class="quality-segment excellent" id="qualityExcellent" style="width: 35%;">35%</div>
+                            <div class="quality-segment good" id="qualityGood" style="width: 34%;">34%</div>
+                            <div class="quality-segment acceptable" id="qualityAcceptable" style="width: 20%;">20%</div>
+                            <div class="quality-segment rejected" id="qualityRejected" style="width: 11%;">11%</div>
+                        </div>
+                        <div class="quality-legend">
+                            <div class="legend-item">
+                                <div class="legend-dot" style="background: #10b981;"></div>
+                                <span>Excellent (90-100)</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-dot" style="background: #22c55e;"></div>
+                                <span>Good (75-89)</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-dot" style="background: #f59e0b;"></div>
+                                <span>Acceptable (60-74)</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-dot" style="background: #ef4444;"></div>
+                                <span>Rejected (&lt;60)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Auto-Tagging Preview -->
+                    <div class="tagging-section">
+                        <div class="preview-header">
+                            <span class="preview-title">🏷️ Auto-Generated Tags</span>
+                        </div>
+                        <div id="taggingPreview">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary btn-full" onclick="startProcessing()">
+                        <span>🚀</span> Start Processing
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Cost Savings -->
+                <div class="savings-card">
+                    <div class="savings-value" id="savingsValue">87%</div>
+                    <div class="savings-label">Curation Time Saved</div>
+                    <div class="savings-detail">~4.2 hrs manual work automated</div>
+                </div>
+
+                <!-- Live Processing Log -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">📋 Processing Log</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="log-panel" id="logPanel">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Metrics Summary -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">📈 Session Metrics</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="metric-row">
+                            <span class="metric-label">Accuracy vs Human</span>
+                            <span class="metric-value" style="color: var(--success);" id="accuracyMetric">94.2%</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">False Positive Rate</span>
+                            <span class="metric-value" id="fprMetric">3.1%</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Avg Quality Score</span>
+                            <span class="metric-value" id="avgQuality">82.4</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Unique Scenes</span>
+                            <span class="metric-value" id="uniqueScenes">38</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Duplicate Filtered</span>
+                            <span class="metric-value" id="duplicates">12</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">GPU Memory</span>
+                            <span class="metric-value" id="gpuMem">6.8 GB</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">📤 Export & Actions</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary" onclick="exportApproved()">
+                                <span>✅</span> Export Approved
+                            </button>
+                            <button class="btn btn-secondary" onclick="exportAll()">
+                                <span>📦</span> Export All
+                            </button>
+                            <button class="btn btn-secondary" onclick="sendToReview()">
+                                <span>👁️</span> Human Review
+                            </button>
+                            <button class="btn btn-secondary" onclick="addToDatabase()">
+                                <span>➕</span> Add to Flim DB
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Sample frame data
+        const sampleFrames = [
+            { url: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=200', score: 94, status: 'approved' },
+            { url: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=200', score: 91, status: 'approved' },
+            { url: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=200', score: 88, status: 'approved' },
+            { url: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=200', score: 85, status: 'approved' },
+            { url: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=200', score: 82, status: 'approved' },
+            { url: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=200', score: 78, status: 'approved' },
+            { url: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=200', score: 71, status: 'pending' },
+            { url: 'https://images.unsplash.com/photo-1524712245354-2c4e5e7121c0?w=200', score: 65, status: 'pending' },
+            { url: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=200', score: 52, status: 'rejected' },
+            { url: 'https://images.unsplash.com/photo-1514924013411-cbf25faa35bb?w=200', score: 45, status: 'rejected' }
+        ];
+
+        const taggedFrames = [
+            {
+                url: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=200',
+                title: 'Frame #0024',
+                score: 94,
+                tags: ['portrait', 'close-up', 'warm lighting', 'indoor', 'dramatic', 'bokeh']
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=200',
+                title: 'Frame #0089',
+                score: 91,
+                tags: ['wide shot', 'silhouette', 'backlit', 'cinematic', 'atmospheric', 'moody']
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=200',
+                title: 'Frame #0156',
+                score: 88,
+                tags: ['establishing', 'night', 'urban', 'neon', 'cyberpunk', 'rain']
+            }
+        ];
+
+        let logEntries = [];
+        let processingActive = false;
+
+        // Initialize
+        function init() {
+            renderFrameGrid();
+            renderTaggingPreview();
+            addLogEntry('System initialized', 'success');
+            addLogEntry('Demo video selected: Luxury Brand Ad', 'info');
+            addLogEntry('Ready to process (45s footage)', 'info');
+        }
+
+        function renderFrameGrid() {
+            const grid = document.getElementById('frameGrid');
+            grid.innerHTML = sampleFrames.map(frame => `
+                <div class="frame-item ${frame.status}">
+                    <img src="${frame.url}" alt="">
+                    <span class="frame-score ${frame.score >= 80 ? 'high' : frame.score >= 60 ? 'medium' : 'low'}">${frame.score}</span>
+                    <span class="frame-badge">${frame.status === 'approved' ? '✅' : frame.status === 'pending' ? '⏳' : '❌'}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderTaggingPreview() {
+            const preview = document.getElementById('taggingPreview');
+            preview.innerHTML = taggedFrames.map(frame => `
+                <div class="tag-item">
+                    <div class="tag-thumb"><img src="${frame.url}" alt=""></div>
+                    <div class="tag-content">
+                        <div class="tag-header">
+                            <span class="tag-title">${frame.title}</span>
+                            <span class="tag-score">${frame.score}%</span>
+                        </div>
+                        <div class="tag-pills">
+                            ${frame.tags.map(t => `<span class="tag-pill">${t}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectDemo(demo) {
+            document.querySelectorAll('.demo-card').forEach(card => card.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            addLogEntry(`Selected demo: ${demo}`, 'info');
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                addLogEntry(`File uploaded: ${file.name}`, 'success');
+                addLogEntry(`Size: ${(file.size / 1024 / 1024).toFixed(1)} MB`, 'info');
+            }
+        }
+
+        function startProcessing() {
+            if (processingActive) return;
+            processingActive = true;
+
+            // Reset steps
+            document.querySelectorAll('.step-circle').forEach(step => {
+                step.classList.remove('active', 'complete');
+            });
+
+            const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
+            const stepNames = ['Ingesting video...', 'Detecting shots (TransNetV2)...', 'Extracting keyframes...', 'Scoring quality...', 'Auto-tagging content...'];
+            
+            let currentStep = 0;
+
+            const processStep = () => {
+                if (currentStep > 0) {
+                    document.getElementById(steps[currentStep - 1]).classList.remove('active');
+                    document.getElementById(steps[currentStep - 1]).classList.add('complete');
+                }
+
+                if (currentStep < steps.length) {
+                    document.getElementById(steps[currentStep]).classList.add('active');
+                    addLogEntry(stepNames[currentStep], 'info');
+                    
+                    // Simulate stats updates
+                    updateStatsAnimated(currentStep);
+                    
+                    currentStep++;
+                    setTimeout(processStep, 1500);
+                } else {
+                    addLogEntry('Processing complete!', 'success');
+                    addLogEntry('98 frames ready for database', 'success');
+                    document.getElementById('statusText').textContent = 'Complete';
+                    processingActive = false;
+                }
+            };
+
+            addLogEntry('Starting pipeline...', 'info');
+            processStep();
+        }
+
+        function updateStatsAnimated(step) {
+            const stats = [
+                { shots: 12, frames: 28, approved: 22, time: '2.1s' },
+                { shots: 28, frames: 67, approved: 54, time: '5.3s' },
+                { shots: 38, frames: 102, approved: 78, time: '8.2s' },
+                { shots: 44, frames: 128, approved: 91, time: '10.8s' },
+                { shots: 47, frames: 142, approved: 98, time: '12.4s' }
+            ];
+
+            if (step < stats.length) {
+                const s = stats[step];
+                document.getElementById('shotsDetected').textContent = s.shots;
+                document.getElementById('framesExtracted').textContent = s.frames;
+                document.getElementById('framesApproved').textContent = s.approved;
+                document.getElementById('processTime').textContent = s.time;
+            }
+        }
+
+        function addLogEntry(message, type = 'info') {
+            const log = document.getElementById('logPanel');
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `
+                <span class="log-time">[${time}]</span>
+                <span class="log-message ${type}">${message}</span>
+            `;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function exportApproved() {
+            addLogEntry('Exporting 98 approved frames...', 'info');
+            setTimeout(() => addLogEntry('Export complete: approved_frames.zip', 'success'), 1000);
+        }
+
+        function exportAll() {
+            addLogEntry('Exporting all 142 frames...', 'info');
+            setTimeout(() => addLogEntry('Export complete: all_frames.zip', 'success'), 1000);
+        }
+
+        function sendToReview() {
+            addLogEntry('Sending 12 pending frames to review queue...', 'info');
+            setTimeout(() => addLogEntry('Added to human review queue', 'success'), 500);
+        }
+
+        function addToDatabase() {
+            addLogEntry('Adding 98 frames to Flim database...', 'info');
+            setTimeout(() => addLogEntry('Successfully added to database!', 'success'), 1500);
+        }
+
+        // Drag and drop
+        const uploadZone = document.getElementById('uploadZone');
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                addLogEntry(`File dropped: ${file.name}`, 'success');
+            }
+        });
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
